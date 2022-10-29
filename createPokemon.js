@@ -12,8 +12,7 @@ const createPokemon = async () => {
             id: index + 1, name: e.Name, type, imageUrl: `http://localhost:8000/images/${index + 1}.jpg`,
         }
     });
-    data = JSON.parse(fs.readFileSync("db.json"))
-    data.pokemons = newData;
+
     fs.writeFileSync("db.json", JSON.stringify(newData))
 }
 

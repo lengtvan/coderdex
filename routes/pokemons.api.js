@@ -3,21 +3,26 @@ var express = require('express');
 const router = express.Router()
 const crypto = require('crypto');
 const { type } = require('os');
+const fs = require("fs");
+const { maxHeaderSize } = require('http');
 
 router.get("/", (req, res, next) => {
     const allowedFilter = [
-        "Name",
-        "Type",
-
+        'search',
+        'type',
     ];
+
     try {
         let { page, limit, ...filterQuery } = req.query;
         page = parseInt(page) || 1;
         limit = parseInt(limit) || 20;
-        //allow title,limit and page query string only
+        console.log(filterQuery)
         const filterKeys = Object.keys(filterQuery);
+
         filterKeys.forEach((key) => {
-            if (!allowedFilter.includes(key)) {
+            console.log(key)
+            if (!allowedFilter.includes
+                (key)) {
                 const exception = new Error(`Query ${key} is not allowed`);
                 exception.statusCode = 401;
                 throw exception;
@@ -28,7 +33,7 @@ router.get("/", (req, res, next) => {
 
         //Read data from db.json then parse to JSobject
         let db = fs.readFileSync("db.json", "utf-8");
-        const pokemons = JSON.parse(db);
+        let pokemons = JSON.parse(db);
 
         //Filter data by title
         let result = [];
@@ -46,22 +51,19 @@ router.get("/", (req, res, next) => {
         //then select number of result by offset
         result = result.slice(offset, offset + limit);
         res.status(200).send(result)
-    } catch (error) {
+    }
+    catch (error) {
+        error.statusCode = 400;
         next(error);
     }
 })
 
 router.get("/:id", (req, res, next) => {
     try {
-
-
-        const { id } = req.params
-
-
-        //Read data from db.json then parse to JSobject
+        let { id } = req.params;
+        id = parseInt(id)
         let db = fs.readFileSync("db.json", "utf-8");
-        const pokemons = JSON.parse(db);
-        //find book by id
+        let pokemons = JSON.parse(db);
         const targetIndex = pokemons.findIndex(poke => poke.id === id)
         if (targetIndex < 0) {
             const exception = new Error(`Pokemon not found`);
@@ -69,25 +71,21 @@ router.get("/:id", (req, res, next) => {
             throw exception;
         }
         //Update new content to db book JS object
-        const requestedPokemon = db.pokemon[id]
-        const prevPokemon = db.pokemons[id - 1]
-        const nextPokemon = db.pokemons[id + 1]
-        if (targetIndex = 721) {
-
-
-            nextPokemon = db.pokemons[1]
-
+        const requestedPokemon = pokemons[id - 1]
+        let prevPokemon = pokemons[id - 2]
+        let nextPokemon = pokemons[id]
+        if (targetIndex === 720) {
+            nextPokemon = pokemons[0]
         }
-        if (targetIndex = 1) {
-
-            prevPokemon = db.pokemons[721]
-
+        if (targetIndex === 0) {
+            prevPokemon = pokemons[720]
         }
-
+        console.log(targetIndex)
 
         //put send response
-        res.status(200).send(requestedPokemon, prevPokemon, nextPokemon)
+        res.status(200).send({ requestedPokemon, prevPokemon, nextPokemon })
     } catch (error) {
+        error.statusCode = 400;
         next(error)
     }
 })
@@ -119,11 +117,12 @@ router.post("/", (req, res, next) => {
         }
 
         const newPokemon = {
-            name, type, imageUrl, id: crypto.randomBytes(4).toString("hex")
+            name, type, imageUrl, id
         };
         //Read data from db.json then parse to JSobject
         let db = fs.readFileSync("db.json", "utf-8");
-        const pokemons = JSON.parse(db);
+
+        let pokemons = JSON.parse(db);
 
         const pokeNames = pokemons.map((e) => e.name)
         const pokeIds = pokemons.map((e) => e.id)
@@ -143,11 +142,44 @@ router.post("/", (req, res, next) => {
 
         res.status(200).send(newPokemon)
     } catch (error) {
+        error.statusCode = 400;
         next(error)
     }
 
 })
 
+router.delete("/:id", (req, res, next) => {
+    try {
+        let { id } = req.params;
+        id = parseInt(id)
+        //Read data from db.json then parse to JSobject
+        let db = fs.readFileSync("db.json", "utf-8");
+        let pokemons = JSON.parse(db);
+        console.log(type(pokemons))
+        //find book by id
+        const targetIndex = pokemons.findIndex(poke => poke.id === id)
+        if (targetIndex < 0) {
+            const exception = new Error(`Pokemon not found`);
+            exception.statusCode = 404;
+            throw exception;
+        }
 
+
+        //filter db books object
+        pokemons = pokemons.filter(poke => poke.id !== id)
+        //db JSobject to JSON string
+
+        db = JSON.stringify(pokemons)
+        //write and save to db.json
+
+        fs.writeFileSync("db.json", db)
+        //delete send response
+        res.status(200).send({})
+    } catch (error) {
+        error.statusCode = 400;
+        next(error)
+    }
+
+})
 
 module.exports = router;
