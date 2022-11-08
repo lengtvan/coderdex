@@ -50,7 +50,7 @@ router.get("/", (req, res, next) => {
         }
         //then select number of result by offset
         result = result.slice(offset, offset + limit);
-        res.status(200).send(result)
+        res.status(200).send({ data: result })
     }
     catch (error) {
         error.statusCode = 400;
@@ -71,19 +71,19 @@ router.get("/:id", (req, res, next) => {
             throw exception;
         }
         //Update new content to db book JS object
-        const requestedPokemon = pokemons[id - 1]
-        let prevPokemon = pokemons[id - 2]
+        const pokemon = pokemons[id - 1]
+        let previousPokemon = pokemons[id - 2]
         let nextPokemon = pokemons[id]
         if (targetIndex === 720) {
             nextPokemon = pokemons[0]
         }
         if (targetIndex === 0) {
-            prevPokemon = pokemons[720]
+            previousPokemon = pokemons[720]
         }
         console.log(targetIndex)
 
         //put send response
-        res.status(200).send({ requestedPokemon, prevPokemon, nextPokemon })
+        res.status(200).send({ data: { pokemon, previousPokemon, nextPokemon } })
     } catch (error) {
         error.statusCode = 400;
         next(error)
@@ -98,26 +98,26 @@ router.post("/", (req, res, next) => {
             "electric", "fighting", "flyingText", "grass", "ice",
             "poison", "rock", "water"
         ]
-        const { name, id, imageUrl, type } = req.body;
+        const { name, id, url, types } = req.body;
 
-        if (!name || !type || !imageUrl || !id) {
+        if (!name || !types || !url || !id) {
             const exception = new Error(`Missing required data`);
             exception.statusCode = 401;
             throw exception;
         }
-        if (type.length > 2) {
+        if (types.length > 2) {
             const exception = new Error(`Pokémon can only have one or two types.`);
             exception.statusCode = 401;
             throw exception;
         }
-        if (type.filter((e) => !pokemonTypes.includes(e)).length > 0) {
+        if (types.filter((e) => !pokemonTypes.includes(e)).length > 0) {
             const exception = new Error(`if the types of Pokémon are not included in the valid given PokémonTypes array`);
             exception.statusCode = 401;
             throw exception;
         }
 
         const newPokemon = {
-            name, type, imageUrl, id
+            name, types, url, id
         };
         //Read data from db.json then parse to JSobject
         let db = fs.readFileSync("db.json", "utf-8");
@@ -155,7 +155,7 @@ router.delete("/:id", (req, res, next) => {
         //Read data from db.json then parse to JSobject
         let db = fs.readFileSync("db.json", "utf-8");
         let pokemons = JSON.parse(db);
-        console.log(type(pokemons))
+        // console.log(type(pokemons))
         //find book by id
         const targetIndex = pokemons.findIndex(poke => poke.id === id)
         if (targetIndex < 0) {
