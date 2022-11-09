@@ -19,10 +19,10 @@ router.get("/", (req, res, next) => {
         console.log(filterQuery)
         const filterKeys = Object.keys(filterQuery);
 
-        filterKeys.forEach((key) => {
+        filterKeys?.forEach((key) => {
             console.log(key)
-            if (!allowedFilter.includes
-                (key)) {
+            if (!allowedFilter.includes(key)
+            ) {
                 const exception = new Error(`Query ${key} is not allowed`);
                 exception.statusCode = 401;
                 throw exception;
@@ -39,9 +39,19 @@ router.get("/", (req, res, next) => {
         let result = [];
         if (filterKeys.length) {
             filterKeys.forEach((condition) => {
-                result = result.length
-                    ? result.filter((poke) => poke[condition] === filterQuery[condition] || poke[condition].includes(filterQuery[condition]))
-                    : pokemons.filter((poke) => poke[condition] === filterQuery[condition] || poke[condition].includes(filterQuery[condition]));
+                if (condition === "type") {
+
+                    result = result.length
+                        ? result.filter((poke) => poke["types"].includes(filterQuery["type"]))
+                        : pokemons.filter((poke) => poke["types"].includes(filterQuery["type"]));
+
+                }
+                else {
+                    result = result.length
+                        ? result.filter((poke) => poke[condition] === filterQuery[condition] || poke[condition].includes(filterQuery[condition]))
+                        : pokemons.filter((poke) => poke[condition] === filterQuery[condition] || poke[condition].includes(filterQuery[condition]));
+                }
+
             });
         }
 
