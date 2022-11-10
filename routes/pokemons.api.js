@@ -48,8 +48,8 @@ router.get("/", (req, res, next) => {
                 }
                 else {
                     result = result.length
-                        ? result.filter((poke) => poke[condition] === filterQuery[condition] || poke[condition].includes(filterQuery[condition]))
-                        : pokemons.filter((poke) => poke[condition] === filterQuery[condition] || poke[condition].includes(filterQuery[condition]));
+                        ? result.filter((poke) => poke["name"] === filterQuery[condition])
+                        : pokemons.filter((poke) => poke["name"] === filterQuery[condition]);
                 }
 
             });
@@ -121,7 +121,7 @@ router.post("/", (req, res, next) => {
             throw exception;
         }
         if (types.filter((e) => !pokemonTypes.includes(e)).length > 0) {
-            const exception = new Error(`if the types of Pokémon are not included in the valid given PokémonTypes array`);
+            const exception = new Error(`Pokémon’s type is invalid.`);
             exception.statusCode = 401;
             throw exception;
         }
