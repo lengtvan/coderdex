@@ -81,7 +81,7 @@ router.get("/:id", (req, res, next) => {
             throw exception;
         }
         //Update new content to db book JS object
-        const pokemon = pokemons[id - 1]
+        let pokemon = pokemons[id - 1]
         let previousPokemon = pokemons[id - 2]
         let nextPokemon = pokemons[id]
         if (targetIndex === 720) {
@@ -90,10 +90,17 @@ router.get("/:id", (req, res, next) => {
         if (targetIndex === 0) {
             previousPokemon = pokemons[720]
         }
-        console.log(targetIndex)
+
 
         //put send response
-        res.status(200).send({ data: { pokemon, previousPokemon, nextPokemon } })
+        if (previousPokemon & nextPokemon) {
+            res.status(200).send({ data: { pokemon, previousPokemon, nextPokemon } })
+        }
+        else {
+            pokemon = pokemons[targetIndex]
+            res.status(200).send({ data: { pokemon } })
+        }
+
     } catch (error) {
         error.statusCode = 400;
         next(error)
@@ -108,7 +115,9 @@ router.post("/", (req, res, next) => {
             "electric", "fighting", "flyingText", "grass", "ice",
             "poison", "rock", "water"
         ]
-        const { name, id, url, types } = req.body;
+        let { name, id, url, types } = req.body;
+
+        id = parseInt(id)
 
         if (!name || !types || !url || !id) {
             const exception = new Error(`Missing required data`);
@@ -132,10 +141,9 @@ router.post("/", (req, res, next) => {
         //Read data from db.json then parse to JSobject
         let db = fs.readFileSync("db.json", "utf-8");
 
-        let pokemons = JSON.parse(db);
-
-        const pokeNames = pokemons.map((e) => e.name)
-        const pokeIds = pokemons.map((e) => e.id)
+        const pokemons = JSON.parse(db);
+        const pokeNames = pokemons.map((e) => e.name);
+        const pokeIds = pokemons.map((e) => e.id);
         if ((pokeNames.includes(name)) || (pokeIds.includes(id))) {
             const exception = new Error(`The Pokémon already exists.`);
             exception.statusCode = 401;
@@ -144,7 +152,8 @@ router.post("/", (req, res, next) => {
         //Add new book to book JS object
         pokemons.push(newPokemon)
         //Add new book to db JS object
-        db.pokemons = pokemons
+        db = pokemons
+        console.log(type(pokemons))
         //db JSobject to JSON string
         db = JSON.stringify(db)
         //write and save to db.json
